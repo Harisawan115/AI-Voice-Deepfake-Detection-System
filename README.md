@@ -171,9 +171,3 @@ Audio File (.wav/.flac/.mp3)
 - [ASVspoof Challenge Official Site](https://www.asvspoof.org/)
 
 ```
-
----
-
-## 📧 Contact
-
-BS Artificial Intelligence — 6th Semester Project
