@@ -1,182 +1,179 @@
+# 🎙️ AI Voice Deepfake Detection System
 
-# Create final testing guide
-guide = '''# 🚨 FINAL TESTING GUIDE - Red Light Violation Fix
-
-## ❌ Problems Fixed:
-
-### 1. OpenCV Error: `!buf.empty()`
-**Reason:** File read nahi ho rahi thi  
-**Solution:** Ab PIL (Pillow) use karta hai image loading ke liye
-
-### 2. Red Light Violation Detect Nahi Ho Rahi
-**Reason:** Logic galat tha - car ko history chahiye thi  
-**Solution:** Ab "in_violation_zone" check hai - agar car clearly line ke aage hai to detect hoga
+A deep learning system to detect whether a voice is **real human speech** or **AI-generated (deepfake)** audio. Built with CNN and Wav2Vec2 Transformer models, deployed via Streamlit.
 
 ---
 
-## 🚀 Kaise Chalaye
+## 📌 Project Info
 
-### Step 1: Nayi File Use Karein
+| Detail | Info |
+|---|---|
+| **Dataset** | ASVspoof 2019 — Logical Access (LA) |
+| **Models** | CNN (Mel Spectrogram) + Wav2Vec2 Transformer |
+| **Deployment** | Streamlit Web App |
+
+---
+
+## 🎯 Results
+
+| Model | Validation Accuracy | Test Accuracy | ROC-AUC |
+|---|---|---|---|
+| CNN (Mel Spectrogram) | 99.67% | 89.80% | 0.9742 |
+| Wav2Vec2 Transformer | In Progress | — | — |
+
+---
+
+## 🗂️ Dataset
+
+**ASVspoof 2019 — Logical Access (LA)**
+
+This project uses the **LA (Logical Access)** subset which contains real human voices vs AI-generated/TTS voices — exactly the task of detecting voice deepfakes.
+
+| Split | Total | Real (Bonafide) | Fake (Spoof) |
+|---|---|---|---|
+| Train | 25,380 | 2,580 | 22,800 |
+| Dev | 24,844 | 2,548 | 22,296 |
+| Eval | 71,237 | 7,355 | 63,882 |
+
+**Download Link:**
+> 🔗 [https://datashare.ed.ac.uk/handle/10283/3336](https://datashare.ed.ac.uk/handle/10283/3336)
+
+After downloading, extract and place the `LA/` folder in the project root directory.
+
+> ⚠️ Only download `LA.zip` (7.1 GB) — `PA.zip` is not needed for this project.
+
+---
+
+## ⚙️ Setup & Installation
+
+### 1. Clone the Repository
 ```bash
-streamlit run app_final.py
+git clone https://github.com/YOUR_USERNAME/voice-deepfake-detection.git
+cd voice-deepfake-detection
 ```
 
-### Step 2: Image Upload Karein
-```
-📁 Upload Image/Video select karein
-Aapki image (jo aapne bheji hai) upload karein
-```
+### 2. Create Virtual Environment
+```bash
+python -m venv venv
 
-### Step 3: Debug Mode ON
-```
-🔍 Debug Mode checkbox click karein
-```
+# Windows
+venv\Scripts\activate
 
----
-
-## 🎯 Aapki Image Ke Liye Special Settings
-
-Aapki image mein multiple cars hain traffic light pe. Iske liye:
-
-### Important Settings:
-1. **Stop Line Position:** 70% of image height
-   - Agar cars neeche hain to violation detect hoga
-   
-2. **Traffic Light:** RED hona chahiye
-   - Image load hote hi timer start hota hai
-   - ~6 seconds baad RED light ayega
-   
-3. **Confidence:** 0.3 (30%) - Lower hai taake zyada cars detect hon
-
----
-
-## 🔍 Debug Mode Mein Kya Dekhein
-
-### Expected Output:
-```
-Frame: 1
-Light: RED
-Cars: 5, Motorcycles: 0, Persons: 2
-Stop Line Y: 420
-Car ID:0 cls:car
-  bottom_y:450 line:420
-  crossed:True was_before:True
-  in_zone:True confirmed:False
-  ✓ VIOLATION DETECTED!
+# Mac/Linux
+source venv/bin/activate
 ```
 
-### Samajhne Ke Liye:
-- `bottom_y:450` - Car ka front bumper position
-- `line:420` - Stop line ki position  
-- `in_zone:True` - Car violation zone mein hai (line se 50px aage)
-- `✓ VIOLATION DETECTED!` - Success!
+### 3. Install Dependencies
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install transformers librosa streamlit scikit-learn matplotlib seaborn numpy pandas soundfile audioread
+```
 
----
+> For CPU only (no GPU):
+> ```bash
+> pip install torch torchvision torchaudio
+> pip install transformers librosa streamlit scikit-learn matplotlib seaborn numpy pandas soundfile audioread
+> ```
 
-## 🛠️ Agar Ab Bhi Na Chale
+### 4. Download Dataset
+Download `LA.zip` from the link above and extract it so your structure looks like:
+```
+project_folder/
+└── LA/
+    ├── ASVspoof2019_LA_train/
+    ├── ASVspoof2019_LA_dev/
+    ├── ASVspoof2019_LA_eval/
+    └── ASVspoof2019_LA_cm_protocols/
+```
 
-### Problem 1: "Image load nahi ho rahi"
-**Solution:**
+### 5. Update Path in utils.py
+Open `utils.py` and update line 8 with your dataset path:
 ```python
-# Image ko JPG mein convert karein:
-from PIL import Image
-img = Image.open('your_image.webp')  # ya .png
-img.save('converted.jpg', 'JPEG')
-```
-
-### Problem 2: "Cars detect nahi ho rahi"
-**Solution:**
-```python
-# app_final.py line ~253 pe confidence kam karein:
-results = self.yolo(frame, verbose=False, conf=0.2)  # 0.2 ya 0.1
-```
-
-### Problem 3: "Red light hai par violation nahi"
-**Solution:**
-```python
-# Stop line position adjust karein (line ~210):
-self.stop_line_y = int(h * 0.60)  # 60% pe rakhein
+BASE_PATH = r"C:\your\path\to\LA"
 ```
 
 ---
 
-## 📊 Aapki Image Analysis
+## 🚀 Training
 
-Aapki image mein:
-- 🚗 **5-6 cars** hain
-- 🚦 **Traffic light RED** hai
-- 🛑 **Stop line** cross ho rahi hai
+### Train CNN Model
+```bash
+python train_cnn.py
+```
+- Training time: ~30-40 min (GPU) | ~2-3 hours (CPU)
+- Saves: `models/cnn_best_model.pth`
 
-**Expected Result:**
-- Har car ke liye "🔴 Red Light Violation" detect honi chahiye
-- License plate read ho (agar visible hai)
-
----
-
-## 🎓 Quick Test Checklist
-
-- [ ] `app_final.py` run kiya
-- [ ] Image upload ki
-- [ ] Debug mode ON kiya
-- [ ] Wait kiya 6 seconds (RED light ke liye)
-- [ ] Cars detect hue (debug mein dikhe)
-- [ ] Violation detect hui
+### Train Wav2Vec2 Model
+```bash
+python train_wav2vec2.py
+```
+- Training time: ~45-60 min (GPU)
+- Saves: `models/wav2vec2_best_model.pth`
+- First run downloads Wav2Vec2 weights (~380MB)
 
 ---
 
-## 📞 Emergency Fix
+## 🌐 Run Streamlit App
 
-Agar sab fail ho jaye toh yeh code try karein:
+```bash
+streamlit run streamlit_app.py
+```
 
-```python
-# Simple test - sirf red light detection
-import cv2
-import numpy as np
-from ultralytics import YOLO
+Open browser at: `http://localhost:8501`
 
-model = YOLO('yolov8n.pt')
-img = cv2.imread('your_image.jpg')
-results = model(img)
+### How to Use
+1. Select model from sidebar (CNN / Wav2Vec2 / Both)
+2. Upload an audio file (`.wav`, `.mp3`, `.flac`)
+3. Click **Analyze Now**
+4. See result: ✅ Real Voice or ⚠️ AI-Generated/Fake
 
-# Draw stop line
-h, w = img.shape[:2]
-cv2.line(img, (0, int(h*0.7)), (w, int(h*0.7)), (0,0,255), 5)
+---
 
-# Detect cars
-for det in results[0].boxes:
-    x1,y1,x2,y2 = map(int, det.xyxy[0])
-    cls = int(det.cls)
-    if model.names[cls] in ['car', 'truck']:
-        # Check if crossed
-        if y2 > int(h*0.7):
-            cv2.rectangle(img, (x1,y1), (x2,y2), (0,0,255), 3)
-            cv2.putText(img, "VIOLATION", (x1,y1-10), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+## 🧠 Model Architecture
 
-cv2.imshow('Result', img)
-cv2.waitKey(0)
+### CNN Model
+- Input: Mel Spectrogram (128 × 128)
+- 4 Conv blocks with BatchNorm + MaxPool + Dropout
+- Fully connected classifier head
+- Output: Real / Fake (2 classes)
+
+### Wav2Vec2 Model
+- Base: `facebook/wav2vec2-base` (pretrained)
+- Feature extractor frozen, transformer encoder fine-tuned
+- Mean pooling over time dimension
+- Custom classifier head: 768 → 512 → 128 → 2
+- Trained with WeightedRandomSampler for class balance
+
+---
+
+## 📊 How it Works
+
+```
+Audio File (.wav/.flac/.mp3)
+        ↓
+   Load & Resample (16kHz)
+        ↓
+  ┌─────────────────┐
+  │   CNN Branch    │  → Mel Spectrogram → CNN → Softmax
+  └─────────────────┘
+  ┌─────────────────┐
+  │ Wav2Vec2 Branch │  → Raw Waveform → Transformer → Softmax
+  └─────────────────┘
+        ↓
+  Real / Fake + Confidence Score
+```
+---
+
+## 📜 References
+
+- [ASVspoof 2019 Dataset Paper](https://arxiv.org/abs/2109.00535)
+- [Wav2Vec2 Paper — Facebook AI](https://arxiv.org/abs/2006.11477)
+- [ASVspoof Challenge Official Site](https://www.asvspoof.org/)
+
 ```
 
 ---
 
-**🎉 Ab aapki image bhi kaam karegi!**
-'''
+## 📧 Contact
 
-with open('final_traffic_violation_system/FINAL_TESTING_GUIDE.md', 'w') as f:
-    f.write(guide)
-
-print("✅ FINAL_TESTING_GUIDE.md created!")
-print("\n" + "="*70)
-print("🎉 FINAL FIX COMPLETE!")
-print("="*70)
-print("\n📁 New File: app_final.py")
-print("\n🔧 Key Fixes:")
-print("   1. ✅ OpenCV error fixed (PIL image loading)")
-print("   2. ✅ Red light detection improved")
-print("   3. ✅ 'in_violation_zone' logic added")
-print("   4. ✅ Error handling for all file types")
-print("   5. ✅ Better debug information")
-print("\n🚀 Run:")
-print("   streamlit run app_final.py")
-print("\n📖 Read FINAL_TESTING_GUIDE.md")
-print("="*70)
+BS Artificial Intelligence — 6th Semester Project
